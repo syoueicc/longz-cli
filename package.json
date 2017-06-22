@@ -9,7 +9,7 @@
   "bin": {
     "longz": "bin/longz",
     "longz-new": "bin/longz-new",
-    "longz-add": "bin.longz-add"
+    "longz-add": "bin/longz-add"
   },
   "keywords": [
     "React",
