@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+const chalk = require('chalk');
+const exists = require('fs').existsSync;
+const donwload = require('../lib/download-git');
+const { resolve, join } = require('path');
+const shelljs = require('shelljs');
+const readFile = require('fs').readFileSync;
+const writeFile = require('fs').writeFileSync;
+const gitUser = require('../lib/git-user');
+
+program
+    .usage('[project-name]');
+
+program.on('--help', function() {
+    console.log('   examples:');
+    console.log();
+    console.log( chalk.gray('       # create a new project with official project name') );
+    console.log( chalk.green('       # longz new <project>') );
+    console.log();
+});
+
+
+function help() {
+    program.parse(process.argv);
+    if(program.args.length < 1) return program.help();
+}
+
+help();
+
+const project = program.args[0];
+if( exists(project) ) {
+    console.log( chalk.red('       directory exists.') );
+    return false;
+}
+
+console.log('waiting, please...')
+donwload(true, function(snipper, tmp) {
+    let filePath = resolve(process.cwd(), `${project}/package.json`);
+    shelljs.cp("-Rf", `${tmp}/templates`, resolve(process.cwd(), project));
+    let package = readFile(filePath);
+    package = package.toString();
+    package = package.replace("<%projectname%>", project).replace("<%author%>", gitUser.name);
+    writeFile(filePath, package);
+    snipper.stop();
+    console.log(chalk.green(`project ${project} Create Success!`));
+    console.log(`  cd ${project}`);
+    console.log('  npm install');
+    console.log('  npm start');
+});

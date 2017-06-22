@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+require('commander')
+    .version(require('../package').version)
+    .usage('<command> [options]')
+    .command('new', 'create new project')
+    .command('add', 'add component、store、interface.')
+    .parse(process.argv);

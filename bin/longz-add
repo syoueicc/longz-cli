@@ -1,0 +1,70 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+const chalk = require('chalk');
+const download = require('../lib/download-git');
+const _ = require('lodash');
+const { resolve, join } = require('path');
+const exists = require('fs').existsSync;
+const shelljs = require('shelljs');
+const readFile = require('fs').readFileSync;
+const writeFile = require('fs').writeFileSync;
+
+program
+    .usage('<type> [type-name]');
+
+program.on('--help', function() {
+    console.log('   type:');
+    console.log();
+    console.log( chalk.gray('       # component|store|interface') );
+    console.log();
+    console.log('   examples:');
+    console.log();
+    console.log( chalk.gray('       # create Hello component') );
+    console.log( chalk.green('       # longz add component Hello') );
+    console.log();
+});
+
+function help() {
+    program.parse(process.argv);
+    if(program.args.length < 1) return program.help();
+}
+
+help();
+
+let type = program.args[0];
+let typename = program.args[1];
+
+if(_.isEmpty(type) || _.isEmpty(typename) || ['component', 'store', 'interface'].indexOf(type) < 0) {
+    return program.help();
+}
+
+const to = resolve( process.cwd(), `src/${type}s` )
+
+if(exists(to) == false) {
+    return console.log(chalk.red("The command is running in the wrong place"));
+}
+
+const toFolder = resolve(to, typename);
+
+if(exists(toFolder)) {
+    
+    return console.log(chalk.red(`${type} ${typename} exists`));
+}
+
+shelljs.mkdir('-p', toFolder)
+
+download(function(snipper, tmp) {
+    const folder = resolve(tmp, `sub-templates/${type}/*`);
+    shelljs.cp("-Rf", folder, toFolder);
+    snipper.stop();
+    console.log();
+    let ext = type == 'component' ? 'tsx' : "ts";
+    let file = readFile(`${toFolder}/index.${ext}`);
+    file = file.toString();
+    var reg = new RegExp(`<%${type}%>`, 'g')
+    file = file.replace(reg, _.upperFirst(typename));
+    writeFile(`${toFolder}/index.${ext}`, file);
+    console.log(`${type} ${typename} created.`);
+})
+
