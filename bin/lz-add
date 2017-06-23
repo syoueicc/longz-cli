@@ -62,9 +62,15 @@ download(function(snipper, tmp) {
     let ext = type == 'component' ? 'tsx' : "ts";
     let file = readFile(`${toFolder}/index.${ext}`);
     file = file.toString();
-    var reg = new RegExp(`<%${type}%>`, 'g')
+    var reg = new RegExp(`<%${type}%>`, 'g');
     file = file.replace(reg, _.upperFirst(typename));
     writeFile(`${toFolder}/index.${ext}`, file);
-    console.log(`${type} ${typename} created.`);
+    let testPath = resolve(process.cwd(), `test/${type}s`);
+    if(exists(testPath) == false) {
+        shelljs.mkdir('-p', testPath);
+    }
+
+    shelljs.cp('-Rf', resolve(tmp, `sub-templates/test/index.js`), `${testPath}/${typename}.${ext}`);
+    console.log(`${type} ${typename} and test file created.`);
 })
 
